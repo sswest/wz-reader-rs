@@ -34,8 +34,9 @@ pub struct WzBaseReader<T: Sized + AsRef<[u8]>> {
 
 /// the Mmap impl for WzBaseReader
 pub type WzReader = WzBaseReader<Mmap>;
+pub type WzVecReader = WzBaseReader<Vec<u8>>;
 
-impl Default for WzBaseReader<Mmap> {
+impl Default for WzReader {
     fn default() -> Self {
         let memmap = memmap2::MmapMut::map_anon(1)
             .unwrap()
@@ -43,6 +44,16 @@ impl Default for WzBaseReader<Mmap> {
             .unwrap();
         WzBaseReader {
             map: memmap,
+            wz_iv: [0; 4],
+            keys: Arc::new(RwLock::new(WzMutableKey::new([0; 4], [0; 32]))),
+        }
+    }
+}
+
+impl Default for WzVecReader {
+    fn default() -> Self {
+        Self {
+            map: vec![],
             wz_iv: [0; 4],
             keys: Arc::new(RwLock::new(WzMutableKey::new([0; 4], [0; 32]))),
         }
@@ -778,8 +789,6 @@ mod test {
 
     type Error = Box<dyn std::error::Error>;
     type Result<T> = std::result::Result<T, Error>;
-
-    type WzVecReader = WzBaseReader<Vec<u8>>;
 
     fn generate_ascii_string(len: i32) -> Vec<u8> {
         let mut buf = Vec::with_capacity(len as usize);
