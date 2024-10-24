@@ -1,9 +1,9 @@
 use crate::{
     directory, reader, version, Reader, SharedWzMutableKey, WzDirectory, WzNodeArc, WzNodeArcVec,
-    WzNodeCast, WzObjectType, WzReader, WzSliceReader,
+    WzNodeCast, WzObjectType, WzSliceReader, WzVecReader,
 };
-use memmap2::Mmap;
 use std::fs::File;
+use std::io::Read;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -50,7 +50,7 @@ pub struct WzFileMeta {
 #[derive(Debug, Clone, Default)]
 pub struct WzFile {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub offset: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -71,24 +71,25 @@ impl WzFile {
     where
         P: AsRef<std::path::Path>,
     {
-        let file: File = File::open(&path)?;
-        let map = unsafe { Mmap::map(&file)? };
+        let mut buf = vec![];
+        let mut file: File = File::open(&path)?;
+        file.read_to_end(&mut buf)?;
 
-        let block_size = map.len();
+        let block_size = buf.len();
 
         let wz_iv = if let Some(iv) = wz_iv {
             // consider do version::verify_iv_from_wz_file here like WzImage does, but feel like it's not necessary
             iv
         } else {
-            version::guess_iv_from_wz_file(&map).ok_or(Error::UnableToGuessVersion)?
+            version::guess_iv_from_wz_file(&buf).ok_or(Error::UnableToGuessVersion)?
         };
 
         let reader = if let Some(keys) = existing_key {
-            WzReader::new(map)
+            WzVecReader::new(buf)
                 .with_iv(wz_iv)
                 .with_existing_keys(keys.clone())
         } else {
-            WzReader::new(map).with_iv(wz_iv)
+            WzVecReader::new(buf).with_iv(wz_iv)
         };
 
         let offset = reader.get_wz_fstart().map_err(|_| Error::InvalidWzFile)? + 2;

@@ -1,6 +1,6 @@
-use crate::{reader, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzReader};
-use memmap2::Mmap;
+use crate::{reader, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzVecReader};
 use std::fs::File;
+use std::io::Read;
 use std::sync::Arc;
 
 use super::header::{self, MsHeader};
@@ -31,7 +31,7 @@ pub enum Error {
 #[derive(Debug, Clone, Default)]
 pub struct MsFile {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub block_size: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -45,12 +45,13 @@ impl MsFile {
     where
         P: AsRef<std::path::Path>,
     {
-        let file: File = File::open(&path)?;
-        let map = unsafe { Mmap::map(&file)? };
+        let mut buf = vec![];
+        let mut file: File = File::open(&path)?;
+        file.read_to_end(&mut buf)?;
 
-        let block_size = map.len();
+        let block_size = buf.len();
 
-        let reader = WzReader::new(map);
+        let reader = WzVecReader::new(buf);
 
         let ms_header = MsHeader::from_ms_file(path, &reader)?;
 

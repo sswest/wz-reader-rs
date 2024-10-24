@@ -1,6 +1,7 @@
 use crate::property::{WzLua, WzRawData};
 use crate::version::{guess_iv_from_wz_img, verify_iv_from_wz_img};
-use crate::{reader, util, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzReader};
+use crate::{reader, util, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzVecReader};
+use std::io::Read;
 use std::sync::Arc;
 
 #[cfg(feature = "serde")]
@@ -36,7 +37,7 @@ pub const WZ_IMAGE_HEADER_BYTE_WITH_OFFSET: u8 = 0x1B;
 #[derive(Debug, Clone, Default)]
 pub struct WzImage {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub name: WzNodeName,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -52,7 +53,7 @@ impl WzImage {
         name: &WzNodeName,
         offset: usize,
         block_size: usize,
-        reader: &Arc<WzReader>,
+        reader: &Arc<WzVecReader>,
     ) -> Self {
         Self {
             reader: Arc::clone(reader),
@@ -73,20 +74,21 @@ impl WzImage {
             .to_str()
             .unwrap()
             .to_string();
-        let file = std::fs::File::open(path)?;
-        let map = unsafe { memmap2::Mmap::map(&file)? };
+        let mut buf = vec![];
+        let mut file = std::fs::File::open(path)?;
+        file.read_to_end(&mut buf)?;
 
         let wz_iv = if let Some(iv) = wz_iv {
-            if !verify_iv_from_wz_img(&map, &iv) {
+            if !verify_iv_from_wz_img(&buf, &iv) {
                 return Err(Error::WrongVersion);
             }
             iv
         } else {
-            guess_iv_from_wz_img(&map).ok_or(Error::UnableToGuessVersion)?
+            guess_iv_from_wz_img(&buf).ok_or(Error::UnableToGuessVersion)?
         };
 
-        let block_size = map.len();
-        let reader = WzReader::new(map).with_iv(wz_iv);
+        let block_size = buf.len();
+        let reader = WzVecReader::new(buf).with_iv(wz_iv);
 
         Ok(WzImage {
             reader: Arc::new(reader),
@@ -203,4 +205,24 @@ pub fn is_lua_image(name: &str) -> bool {
 pub fn is_valid_wz_image(check_byte: u8) -> bool {
     check_byte == WZ_IMAGE_HEADER_BYTE_WITH_OFFSET
         || check_byte == WZ_IMAGE_HEADER_BYTE_WITHOUT_OFFSET
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::util::maple_crypto_constants::WZ_GMSIV;
+    use crate::version;
+    use crate::version::WzMapleVersion;
+    use std::fs::File;
+    use std::io::Read;
+
+    #[test]
+    fn test_from_buff() {
+        let wz_img = WzImage::from_file(
+            "/Users/sw/Documents/SourceCode/maplelib/wz/MapleEzorsiaV2wzfiles.img",
+            Some(WZ_GMSIV),
+        )
+        .unwrap();
+        print!("{:?}", wz_img);
+    }
 }

@@ -1,4 +1,4 @@
-use crate::reader::{read_i32_at, WzReader};
+use crate::reader::{read_i32_at, WzVecReader};
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -37,7 +37,7 @@ pub enum WzSoundType {
 #[derive(Debug, Clone, Default)]
 pub struct WzSound {
     #[cfg_attr(feature = "serde", serde(skip))]
-    reader: Arc<WzReader>,
+    reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     offset: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -84,7 +84,7 @@ pub fn get_sound_type_from_header(header: &[u8], file_size: u32, duration: u32) 
 
 impl WzSound {
     pub fn new(
-        reader: &Arc<WzReader>,
+        reader: &Arc<WzVecReader>,
         offset: usize,
         length: u32,
         header_offset: usize,

@@ -1,4 +1,4 @@
-use crate::{reader, util::WzMutableKey, Reader, WzNodeArc, WzNodeCast, WzReader};
+use crate::{reader, util::WzMutableKey, Reader, WzNodeArc, WzNodeCast, WzVecReader};
 use std::sync::{Arc, RwLock};
 use thiserror::Error;
 
@@ -40,7 +40,7 @@ pub struct WzStringMeta {
 /// `WzString` only hold the string information.
 #[derive(Debug, Clone, Default)]
 pub struct WzString {
-    reader: Arc<WzReader>,
+    reader: Arc<WzVecReader>,
     /// string start offset
     offset: usize,
     /// string length
@@ -80,7 +80,7 @@ impl WzStringMeta {
 }
 
 impl WzString {
-    pub fn from_meta(meta: WzStringMeta, reader: &Arc<WzReader>) -> Self {
+    pub fn from_meta(meta: WzStringMeta, reader: &Arc<WzVecReader>) -> Self {
         Self {
             reader: Arc::clone(reader),
             offset: meta.offset,
@@ -107,7 +107,7 @@ impl WzString {
 
         let encrypted = encrypt_str(&mut mtbkeys, str, &meta_type);
 
-        let mut reader = WzReader::from_buff(&encrypted);
+        let mut reader = WzVecReader::new(encrypted);
 
         reader.wz_iv = iv;
         reader.keys = Arc::new(RwLock::new(mtbkeys));
@@ -230,10 +230,10 @@ mod test {
     #[cfg(feature = "serde")]
     #[test]
     fn test_wz_string_serde_ascii() {
-        let encrypter_reader = WzReader::default();
+        let encrypter_reader = WzVecReader::default();
         let encrypted = encrypter_reader.encrypt_str("test", &WzStringType::Ascii);
 
-        let reader = WzReader::from_buff(&encrypted);
+        let reader = WzVecReader::new(encrypted);
 
         let string = WzString::from_meta(WzStringMeta::new_ascii(0, 4), &Arc::new(reader));
 
@@ -248,10 +248,10 @@ mod test {
     #[cfg(feature = "serde")]
     #[test]
     fn test_wz_string_serde_unicode() {
-        let encrypter_reader = WzReader::default();
+        let encrypter_reader = WzVecReader::default();
         let encrypted = encrypter_reader.encrypt_str("測試", &WzStringType::Unicode);
 
-        let reader = WzReader::from_buff(&encrypted);
+        let reader = WzVecReader::new(encrypted);
 
         let string = WzString::from_meta(WzStringMeta::new_unicode(0, 4), &Arc::new(reader));
 

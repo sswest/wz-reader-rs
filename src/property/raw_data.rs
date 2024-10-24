@@ -1,16 +1,16 @@
-use crate::WzReader;
+use crate::WzVecReader;
 use std::ops::Range;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct WzRawData {
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     offset: usize,
     length: usize,
 }
 
 impl WzRawData {
-    pub fn new(reader: &Arc<WzReader>, offset: usize, length: usize) -> Self {
+    pub fn new(reader: &Arc<WzVecReader>, offset: usize, length: usize) -> Self {
         Self {
             reader: Arc::clone(reader),
             offset,

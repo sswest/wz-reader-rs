@@ -1,4 +1,4 @@
-use crate::{WzImage, WzReader};
+use crate::{WzImage, WzVecReader};
 use std::cmp;
 use std::sync::Arc;
 
@@ -25,7 +25,7 @@ pub struct MsEntryMeta {
 #[derive(Debug, Clone, Default)]
 pub struct MsImage {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub offset: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -35,7 +35,7 @@ pub struct MsImage {
 }
 
 impl MsImage {
-    pub fn new(meta: MsEntryMeta, reader: &Arc<WzReader>) -> Self {
+    pub fn new(meta: MsEntryMeta, reader: &Arc<WzVecReader>) -> Self {
         Self {
             reader: Arc::clone(reader),
             offset: meta.start_pos as usize,
@@ -89,7 +89,7 @@ impl MsImage {
         snow_decryptor.decrypt_slice(&mut image_buffer[..]);
 
         // create a new allocate reader,but only grab the size of the image, not size_aligned
-        let image_reader = WzReader::from_buff(&image_buffer[..self.meta.size as usize]);
+        let image_reader = WzVecReader::new(image_buffer[..self.meta.size as usize].to_vec());
 
         WzImage {
             reader: Arc::new(image_reader),

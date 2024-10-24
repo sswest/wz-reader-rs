@@ -3,7 +3,7 @@ use crate::property::{
     WzValue,
 };
 use crate::{
-    reader, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzObjectType, WzReader, WzSliceReader,
+    reader, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzObjectType, WzSliceReader, WzVecReader,
 };
 use std::sync::Arc;
 use thiserror::Error;
@@ -28,7 +28,7 @@ pub enum WzPropertyParseError {
 
 pub fn parse_property_list(
     parent: Option<&WzNodeArc>,
-    org_reader: &Arc<WzReader>,
+    org_reader: &Arc<WzVecReader>,
     reader: &WzSliceReader,
     origin_offset: usize,
 ) -> Result<(WzNodeArcVec, Vec<WzNodeArc>), WzPropertyParseError> {
@@ -63,7 +63,7 @@ pub fn parse_property_node(
     name: WzNodeName,
     property_type: u8,
     parent: Option<&WzNodeArc>,
-    org_reader: &Arc<WzReader>,
+    org_reader: &Arc<WzVecReader>,
     reader: &WzSliceReader,
     origin_offset: usize,
 ) -> Result<(WzNodeName, WzNodeArc, Option<Vec<WzNodeArc>>), WzPropertyParseError> {
@@ -136,7 +136,7 @@ pub fn parse_property_node(
 
 pub fn parse_extended_prop(
     parent: Option<&WzNodeArc>,
-    org_reader: &Arc<WzReader>,
+    org_reader: &Arc<WzVecReader>,
     reader: &WzSliceReader,
     end_of_block: usize,
     origin_offset: usize,
@@ -156,7 +156,7 @@ pub fn parse_extended_prop(
 
 pub fn parse_more(
     parent: Option<&WzNodeArc>,
-    org_reader: &Arc<WzReader>,
+    org_reader: &Arc<WzVecReader>,
     reader: &WzSliceReader,
     end_of_block: usize,
     origin_offset: usize,
@@ -341,7 +341,7 @@ pub fn parse_more(
 /// Direct get node from path with providing reader. see [`crate::WzImage::at_path`].
 pub fn get_node(
     path: &str,
-    org_reader: &Arc<WzReader>,
+    org_reader: &Arc<WzVecReader>,
     reader: &WzSliceReader,
     origin_offset: usize,
 ) -> Result<(WzNodeName, WzNodeArc), WzPropertyParseError> {

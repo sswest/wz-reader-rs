@@ -30,6 +30,7 @@ tempfile = "3"
 criterion = "0.5"
 axum = "0.7.5"
 tokio = { version = "1.0", features = ["full"] }
+base64 = "0.22.1"
 
 [features]
 json = ["serde", "dep:serde_json"]
@@ -46,7 +47,7 @@ required-features = ["json", "image/default-formats"]
 
 [[example]]
 name = "wz_to_json"
-required-features = ["json"]
+required-features = ["json", "image/png"]
 
 [[example]]
 name = "parse_single_img_file"

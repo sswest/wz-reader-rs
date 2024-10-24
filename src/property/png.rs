@@ -75,7 +75,7 @@ pub fn get_image(node: &WzNodeArc) -> Result<DynamicImage, WzPngParseError> {
 #[derive(Debug, Clone, Default)]
 pub struct WzPng {
     #[cfg_attr(feature = "serde", serde(skip))]
-    reader: Arc<reader::WzReader>,
+    reader: Arc<reader::WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     offset: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -93,7 +93,7 @@ pub struct WzPng {
 
 impl WzPng {
     pub fn new(
-        reader: &Arc<reader::WzReader>,
+        reader: &Arc<reader::WzVecReader>,
         size: (u32, u32),
         format: (u32, u32),
         data_range: (usize, usize),

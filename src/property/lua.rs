@@ -1,6 +1,6 @@
 use crate::util::maple_crypto_constants::{WZ_GMSIV, WZ_MSEAIV};
 use crate::util::WzMutableKey;
-use crate::WzReader;
+use crate::WzVecReader;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -19,13 +19,13 @@ pub enum WzLuaParseError {
 /// WzLua use to store lua information and extraction method.
 #[derive(Debug, Clone, Default)]
 pub struct WzLua {
-    reader: Arc<WzReader>,
+    reader: Arc<WzVecReader>,
     offset: usize,
     length: usize,
 }
 
 impl WzLua {
-    pub fn new(reader: &Arc<WzReader>, offset: usize, length: usize) -> Self {
+    pub fn new(reader: &Arc<WzVecReader>, offset: usize, length: usize) -> Self {
         Self {
             reader: Arc::clone(reader),
             offset,
@@ -110,13 +110,9 @@ mod test {
 
         file.set_len(len as u64)?;
 
-        let mut map = unsafe { MmapMut::map_mut(&file)? };
-
         let encrypted = generate_encrypted_text(lua_text, iv);
 
-        (&mut map[..len]).copy_from_slice(&encrypted);
-
-        let reader = Arc::new(WzReader::new(map.make_read_only()?).with_iv(iv));
+        let reader = Arc::new(WzVecReader::new(encrypted).with_iv(iv));
 
         Ok(WzLua::new(&reader, 0, len))
     }

@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::reader::{self, Reader, WzReader};
+use crate::reader::{self, Reader, WzVecReader};
 use scroll::{Pread, LE};
 
 use super::snow2_decryptor::Snow2Decryptor;
@@ -37,7 +37,7 @@ pub struct MsHeader {
 }
 
 impl MsHeader {
-    pub fn from_ms_file<P>(path: P, reader: &WzReader) -> Result<Self, Error>
+    pub fn from_ms_file<P>(path: P, reader: &WzVecReader) -> Result<Self, Error>
     where
         P: AsRef<std::path::Path>,
     {

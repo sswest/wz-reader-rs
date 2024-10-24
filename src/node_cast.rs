@@ -124,26 +124,13 @@ mod test {
 
     use super::*;
     use crate::property::{WzSoundType, WzStringMeta};
-    use crate::WzReader;
-    use memmap2::Mmap;
-    use std::fs::OpenOptions;
+    use crate::WzVecReader;
     use std::sync::Arc;
 
-    fn setup_wz_reader() -> Result<WzReader, std::io::Error> {
-        let dir = tempfile::tempdir()?;
-        let file_path = dir.path().join("test.wz");
+    fn setup_wz_reader() -> Result<WzVecReader, std::io::Error> {
+        let buf = vec![0; 200];
 
-        let file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(file_path)?;
-
-        file.set_len(200)?;
-
-        let map = unsafe { Mmap::map(&file)? };
-
-        Ok(WzReader::new(map))
+        Ok(WzVecReader::new(buf))
     }
 
     #[test]

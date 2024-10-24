@@ -1,5 +1,5 @@
 use crate::{
-    reader, Reader, WzImage, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzObjectType, WzReader,
+    reader, Reader, WzImage, WzNode, WzNodeArc, WzNodeArcVec, WzNodeName, WzObjectType, WzVecReader,
 };
 use std::sync::Arc;
 
@@ -46,7 +46,7 @@ fn get_wz_directory_type_from_byte(byte: u8) -> WzDirectoryType {
 #[derive(Debug, Clone, Default)]
 pub struct WzDirectory {
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reader: Arc<WzReader>,
+    pub reader: Arc<WzVecReader>,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub offset: usize,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -58,7 +58,12 @@ pub struct WzDirectory {
 }
 
 impl WzDirectory {
-    pub fn new(offset: usize, block_size: usize, reader: &Arc<WzReader>, is_parsed: bool) -> Self {
+    pub fn new(
+        offset: usize,
+        block_size: usize,
+        reader: &Arc<WzVecReader>,
+        is_parsed: bool,
+    ) -> Self {
         Self {
             reader: reader.clone(),
             offset,
