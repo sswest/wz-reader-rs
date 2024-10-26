@@ -226,6 +226,60 @@ impl WzNode {
         Ok(())
     }
 
+    /// Parse the node base on the object type, but skip uol resolve.
+    pub fn parse_without_uol(&mut self, parent: &WzNodeArc) -> Result<(), Error> {
+        let (childs, _): (WzNodeArcVec, Vec<WzNodeArc>) = match self.object_type {
+            WzObjectType::Directory(ref mut directory) => {
+                if directory.is_parsed {
+                    return Ok(());
+                }
+                let childs = directory.resolve_children(parent)?;
+                directory.is_parsed = true;
+                (childs, vec![])
+            }
+            WzObjectType::File(ref mut file) => {
+                if file.is_parsed {
+                    return Ok(());
+                }
+                let childs = file.parse(parent, None)?;
+                file.is_parsed = true;
+                (childs, vec![])
+            }
+            WzObjectType::MsFile(ref mut file) => {
+                if file.is_parsed {
+                    return Ok(());
+                }
+                let childs = file.parse(parent)?;
+                file.is_parsed = true;
+                (childs, vec![])
+            }
+            WzObjectType::Image(ref mut image) => {
+                if image.is_parsed {
+                    return Ok(());
+                }
+                let result = image.resolve_children(Some(parent))?;
+                image.is_parsed = true;
+                result
+            }
+            WzObjectType::MsImage(ref mut image) => {
+                let mut image = image.to_wz_image();
+                let result = image.resolve_children(Some(parent))?;
+                image.is_parsed = true;
+                self.object_type = image.into();
+                result
+            }
+            _ => return Ok(()),
+        };
+
+        self.children.reserve(childs.len());
+
+        for (name, child) in childs {
+            self.children.insert(name, child);
+        }
+
+        Ok(())
+    }
+
     /// Clear the node childrens and set the node to unparsed.
     pub fn unparse(&mut self) {
         match &mut self.object_type {
